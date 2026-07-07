@@ -75,25 +75,27 @@ The Dockerfile lives in `api/` but needs the whole repo as build context (it cop
 `scraper/` and `api/`), so **build from the repo root**:
 
 ```bash
-docker build -f api/Dockerfile -t listing_extractor_api .
-docker run -p 8000:8000 -e GOOGLE_MAPS_API_KEY=AIza... listing_extractor_api
+docker build -f api/Dockerfile -t collateral_service .
+docker run --env-file .env -p 8000:8000 collateral_service
 ```
 
-- Pass the key at **runtime** with `-e GOOGLE_MAPS_API_KEY=...` (it is never baked into the
-  image; `.env` is excluded via `.dockerignore`).
+- `--env-file .env` loads the key from your local `.env` at **runtime** (plain `docker run`
+  does not auto-read `.env` the way Compose does). The key is never baked into the image —
+  `.env` is excluded from the build context via `.dockerignore`.
+  - Prefer an explicit value? `-e GOOGLE_MAPS_API_KEY=AIza...` still works and overrides.
 - Override the port with `-e PORT=8000` (and map it: `-p 8000:8000`).
 - Runs as a non-root user, with a `/health` HEALTHCHECK.
 
 Run it **detached** and manage it:
 
 ```bash
-docker run -d --name listing_extractor_api --restart unless-stopped \
-  -p 8000:8000 -e GOOGLE_MAPS_API_KEY=AIza... listing_extractor_api
+docker run -d --name collateral_service --restart unless-stopped \
+  --env-file .env -p 8000:8000 collateral_service
 
-docker ps                             # status (health)
-docker logs -f listing_extractor_api  # follow logs
-docker stop listing_extractor_api     # stop
-docker rm -f listing_extractor_api    # remove
+docker ps                          # status (health)
+docker logs -f collateral_service  # follow logs
+docker stop collateral_service     # stop
+docker rm -f collateral_service    # remove
 ```
 
 ## Use
