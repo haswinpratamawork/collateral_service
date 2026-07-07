@@ -48,8 +48,8 @@ The key is read from `.env` automatically (via `python-dotenv`) when the app sta
 ## Run
 
 ```bash
-./api/run_api.sh                 # serve on 0.0.0.0:5006 with auto-reload (dev)
-./api/run_api.sh 127.0.0.1 5006  # custom host + port (positional args)
+./api/run_api.sh                 # serve on 0.0.0.0:8030 with auto-reload (dev)
+./api/run_api.sh 127.0.0.1 8030  # custom host + port (positional args)
 RELOAD=0 ./api/run_api.sh        # production mode (no auto-reload)
 ```
 
@@ -60,13 +60,13 @@ It picks up the project `.venv` automatically and warns if `GOOGLE_MAPS_API_KEY`
 | | Default | Meaning |
 |---|---------|---------|
 | arg 1 / `HOST` | `0.0.0.0` | bind host |
-| arg 2 / `PORT` | `5006` | bind port |
+| arg 2 / `PORT` | `8030` | bind port |
 | `RELOAD` | `1` | `1` = auto-reload on code change (dev); `0` = production |
 
 Or run uvicorn directly without the script:
 
 ```bash
-uvicorn api.main:app --reload --port 5006
+uvicorn api.main:app --reload --port 8030
 ```
 
 ## Docker
@@ -76,21 +76,21 @@ The Dockerfile lives in `api/` but needs the whole repo as build context (it cop
 
 ```bash
 docker build -f api/Dockerfile -t collateral_service .
-docker run --env-file .env -p 5006:5006 collateral_service
+docker run --env-file .env -p 8030:8030 collateral_service
 ```
 
 - `--env-file .env` loads the key from your local `.env` at **runtime** (plain `docker run`
   does not auto-read `.env` the way Compose does). The key is never baked into the image —
   `.env` is excluded from the build context via `.dockerignore`.
   - Prefer an explicit value? `-e GOOGLE_MAPS_API_KEY=AIza...` still works and overrides.
-- Override the port with `-e PORT=5006` (and map it: `-p 5006:5006`).
+- Override the port with `-e PORT=8030` (and map it: `-p 8030:8030`).
 - Runs as a non-root user, with a `/health` HEALTHCHECK.
 
 Run it **detached** and manage it:
 
 ```bash
 docker run -d --name collateral_service --restart unless-stopped \
-  --env-file .env -p 5006:5006 collateral_service
+  --env-file .env -p 8030:8030 collateral_service
 
 docker ps                          # status (health)
 docker logs -f collateral_service  # follow logs
@@ -101,7 +101,7 @@ docker rm -f collateral_service    # remove
 ## Use
 
 ```bash
-curl "http://localhost:5006/extract?url=https://www.rumah123.com/properti/jakarta-pusat/hos41138420/"
+curl "http://localhost:8030/extract?url=https://www.rumah123.com/properti/jakarta-pusat/hos41138420/"
 ```
 
 ```json
@@ -113,13 +113,13 @@ curl "http://localhost:5006/extract?url=https://www.rumah123.com/properti/jakart
 }
 ```
 
-Interactive docs: http://localhost:5006/docs · Health check: `GET /health`
+Interactive docs: http://localhost:8030/docs · Health check: `GET /health`
 
 ### Postman
 
 Import [`collateral_scrapping.postman_collection.json`](./collateral_scrapping.postman_collection.json)
 (File → Import). It has the `/health` and `/extract` requests plus example responses. Set the
-collection variables `base_url` (default `http://localhost:5006`) and `listing_url`.
+collection variables `base_url` (default `http://localhost:8030`) and `listing_url`.
 
 ## Responses
 
