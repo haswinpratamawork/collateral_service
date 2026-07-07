@@ -1,0 +1,155 @@
+{
+  "info": {
+    "_postman_id": "c0117e7a-5cb1-4c5e-9d2f-collateral0001",
+    "name": "Collateral Scrapping API",
+    "description": "Extract luas tanah, luas bangunan, kode pos, and kelurahan from a Rumah123 listing URL.\n\nLuas tanah / luas bangunan come from the listing page; kode pos / kelurahan are reverse-geocoded from the listing's coordinates via Google Maps.\n\nSet the `base_url` and `listing_url` collection variables before running.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearer_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        },
+        "description": "Liveness probe. Returns {\"status\":\"ok\"}."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "pm.test('ok', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "OK",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": "{\n  \"status\": \"ok\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Extract Listing",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/extract?url={{listing_url}}",
+          "host": ["{{base_url}}"],
+          "path": ["extract"],
+          "query": [
+            {
+              "key": "url",
+              "value": "{{listing_url}}",
+              "description": "A rumah123.com/properti/... listing URL"
+            }
+          ]
+        },
+        "description": "Returns luas_tanah, luas_bangunan, kode_pos, kelurahan for the given Rumah123 listing.\n\nkode_pos/kelurahan are null when the listing's coordinates are obfuscated/missing (~6% of listings)."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "pm.test('has the four fields', () => {",
+              "  pm.expect(b).to.have.property('luas_tanah');",
+              "  pm.expect(b).to.have.property('luas_bangunan');",
+              "  pm.expect(b).to.have.property('kode_pos');",
+              "  pm.expect(b).to.have.property('kelurahan');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "Example - house",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/extract?url=https://www.rumah123.com/properti/jakarta-pusat/hos41138420/",
+              "host": ["{{base_url}}"],
+              "path": ["extract"],
+              "query": [
+                { "key": "url", "value": "https://www.rumah123.com/properti/jakarta-pusat/hos41138420/" }
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": "{\n  \"luas_tanah\": 294.0,\n  \"luas_bangunan\": 482.0,\n  \"kode_pos\": \"10430\",\n  \"kelurahan\": \"Kenari\"\n}"
+        },
+        {
+          "name": "Error - not a rumah123 URL (400)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/extract?url=https://example.com/foo",
+              "host": ["{{base_url}}"],
+              "path": ["extract"],
+              "query": [{ "key": "url", "value": "https://example.com/foo" }]
+            }
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "_postman_previewlanguage": "json",
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": "{\n  \"detail\": \"url must be a rumah123.com listing URL\"\n}"
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://gc-bribrain-dev-cl-airport-01-ucei6kuqxq-et.a.run.app",
+      "type": "string"
+    },
+    {
+      "key": "bearer_token",
+      "value": "PASTE_YOUR_OIDC_TOKEN_HERE",
+      "type": "string"
+    },
+    {
+      "key": "listing_url",
+      "value": "https://www.rumah123.com/properti/jakarta-pusat/hos41138420/",
+      "type": "string"
+    }
+  ]
+}
